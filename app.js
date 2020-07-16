@@ -1,51 +1,69 @@
-//  I need to create three routes for
-// mean (average)
-// median (midpoint)
-// mode (most frequent)
 
 const express = require('express')
 const app = express()
+const expressError = require('./expressError')
+
 app.use(express.json())
 
-// console.log(app)
-
-
 // set a route for the mean
-app.get('/mean', (req, res) => {
-    let numsList = req.query.nums.split(',')
-
-    let mean = calculate(numsList, 'mean')
-    console.log(numsList, mean)
-    const response = {
-        "response": {
-            "operation": 'mean',
-            "value": mean
+app.get('/mean', (req, res, next) => {
+    try {
+        if (req.query.nums == undefined) {
+           makeError()
 
         }
+
+            let numsList = req.query.nums.split(',')
+                    // return res.send
+            let mean = calculate(numsList, 'mean')
+            const response = {
+                "response": {
+                    "operation": 'mean',
+                    "value": mean
+                }
+            }
+            return res.json(response)
+
+    } catch (e) {
+        next(e)
     }
-    res.json(response)
+
+
+
 })
 // set a route for the median
-app.get('/median', (req, res) => {
+app.get('/median', (req, res, next) => {
+    try {
+        if (req.query.nums == undefined) {
+            makeError()
+
+        }
     let numsList = req.query.nums.split(',')
-    numsList = numsList.map(Number)
+        numsList = numsList.map(Number)
+
     let median = calculate(numsList, 'median')
-    console.log(numsList, median)
     const response = {
         "response": {
             "operation": 'median',
             "value": median
-
         }
     }
-    // res.send(response)
-    res.json(response)
+        return res.json(response)
+
+    } catch (e) {
+        next(e)
+    }
+
 })
 // set a route for the mode
-app.get('/mode', (req, res) => {
+app.get('/mode', (req, res, next) => {
+    try {
+        if (req.query.nums == undefined) {
+            makeError()
+
+        }
     let numList = req.query.nums.split(',')
     let mode = calculate(numList, 'mode')
-    console.log(numList, mode)
     const response = {
         "response": {
             "operation": 'mode',
@@ -53,9 +71,29 @@ app.get('/mode', (req, res) => {
 
         }
     }
-    res.json(response)
+    return res.json(response)
+    } catch (e) {
+        next(e)
+    }
+
+
 })
 
+//======================================================================
+ // create a 404 middlare
+app.use((req, res, next) => {
+    const e = new expressError('Page not found!', 404)
+    next(e)
+ })
+// //======================================================================
+// create an error middlewere
+app.use((err, req, res, next) => {
+    let status = err.status || 500
+    let msg = err.msg
+    data = { "status": status, "msg": msg }
+    console.log(data)
+    res.json(data)
+})
 
 // listen to the app
 app.listen(3000, () => {
@@ -89,4 +127,7 @@ function calculate(nums, operation) {
         }
         return Math.max(...Object.values(freq))
     }
+}
+function makeError() {
+    throw new expressError('Query parameter must be called nums', 403)
 }
